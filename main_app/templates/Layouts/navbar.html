@@ -4,12 +4,13 @@
   <div class="search-popup">
     <div class="search-popup-container">
 
+
       <h5 class="cat-list-title">Browse Categories</h5>
 
       
 
       <ul class="cat-list">
-        {% for category in category %}
+        {% for category in categories%}
         <li class="cat-list-item">
           <a href="{%url 'categories' category.name %}" title="{{ category.name }}">{{category.name}}</a>
         </li>
@@ -95,7 +96,7 @@
             <div class="offcanvas-body">
               <ul class="navbar-nav justify-content-end flex-grow-1 gap-1 gap-md-5 pe-3">
                 <li class="nav-item dropdown">
-                  <a class="nav-link " href="#" id="dropdownHome" data-bs-toggle="dropdown"
+                  <a class="nav-link " href="{%url 'home'%}" 
                     aria-haspopup="true" aria-expanded="false">Home</a>
                   
                 </li>

@@ -13,12 +13,21 @@ def home(request):
 def category(request , cat):
     category_obj = get_object_or_404(Category, name=cat)
     Products =product.objects.filter(category=category_obj)
+    Categories = Category.objects.all()
 
-    return render(request, 'category.html', {'Products': Products, 'categories':category_obj} )
+    print("Category selected:", category_obj)
+    print("All categories:", Categories)
+    print("Products in category:", Products)
+
+    return render(request, 'category.html', {'Products': Products, 'categories':category_obj, 'Categories':Categories} )
+
+
+
 
 def prod(request, pk):
    
-   Product= product.objects.get(id=pk)
+   Product= get_object_or_404(product, id=pk)
+   
 
    return render(request, "product.html", {'Product':Product} )
 
