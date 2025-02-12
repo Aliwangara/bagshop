@@ -11,15 +11,10 @@ def home(request):
     return render(request , 'index.html', {'Products': Products, 'categories':categories})
 
 def category(request , cat):
-    category_obj = get_object_or_404(Category, name=cat)
-    Products =product.objects.filter(category=category_obj)
-    Categories = Category.objects.all()
-
-    print("Category selected:", category_obj)
-    print("All categories:", Categories)
-    print("Products in category:", Products)
-
-    return render(request, 'category.html', {'Products': Products, 'categories':category_obj, 'Categories':Categories} )
+    category_obj = get_object_or_404(Category, name = cat)
+    prodcts = product.objects.filter(category = category_obj)
+    
+    return render(request, "category.html",{'category_obj':category_obj,'prodcts':prodcts })
 
 
 
