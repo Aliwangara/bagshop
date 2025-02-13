@@ -37,9 +37,36 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # security and verification
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+
+
+    # apps
     'main_app',
     
 ]
+
+AUTHENTICATION_BACKENDS=(
+    'allauth.account.auth_backends.AuthenticationBackend'
+
+)
+
+SITE_ID = 1
+LOGIN_REDIRECT_URL = '/'  
+LOGOUT_REDIRECT_URL = '/' 
+
+SOCIAL_AUTH_GOOGLE_CLIENT_ID = '414530344563-22lqpl17hknqp6hs1hjl7il0k3ee03gd.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_SECRET = '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'
+
+ACCOUNT_FORMS = {
+    'signup': 'main_app.forms.CustomSignupForm',  
+}
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -49,6 +76,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'bagshop.urls'
