@@ -11,16 +11,17 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-v9uo1*_j!4oo0!-b%_e$%dv1rsc7h7f!gp7uuxkgzsqwi_xh-0'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -40,6 +41,19 @@ INSTALLED_APPS = [
     'main_app',
     
 ]
+
+AUTHENTICATION_BACKENDS=(
+    'allauth.account.auth_backends.AuthenticationBackend'
+
+)
+
+SITE_ID = 1
+LOGIN_REDIRECT_URL = '/'  
+LOGOUT_REDIRECT_URL = '/' 
+
+ACCOUNT_FORMS = {
+    'signup': 'main_app.forms.CustomSignupForm',  
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
