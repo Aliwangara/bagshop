@@ -1,111 +1,76 @@
-from .models import product, Order
-from django.shortcuts import render, get_object_or_404,redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.mail import send_mail
+from django.conf import settings
+from main_app.models import product
 
-
-# Displaying the cart
+# View Cart
 def cart(request):
     cart = request.session.get('cart', {})
-    cart_items =[]
-    total_price =0 
-
+    cart_items = []
+    total_price = 0
+    
     for product_id, item in cart.items():
-        product_obj = get_object_or_404(product, id=product_id)
-        item_total = product_obj.price * item['quantity']
-        total_price += item_total
-        
-        cart_items.append({'id':product_obj.id, 'name':product_obj.name, 'price':product_obj.price,
-                           'quantity':item['quantity'], 'total':item_total, 'image':product_obj.image})
-        
-    return render(redirect, 'index.html', {'cart_items':cart_items,'total_price':total_price })
+        product = get_object_or_404(product, id=product_id)
+        cart_items.append({
+            'id': product.id,
+            'name': product.name,
+            'quantity': item['quantity'],
+            'price': product.price * item['quantity'],
+        })
+        total_price += product.price * item['quantity']
+    
+    return render(request, 'index.html', {'cart_items': cart_items, 'total_price': total_price})
 
-# Add to cart functionality
+# Add to Cart
 def add_to_cart(request, product_id):
     cart = request.session.get('cart', {})
-    if str(product_id) in cart:
-        cart[str(product_id)] ['quantity'] +=1
-    else:
-        cart[str(product_id)] = {'quantity':1}
-
+    cart[str(product_id)] = {'quantity': cart.get(str(product_id), {}).get('quantity', 0) + 1}
     request.session['cart'] = cart
+    return redirect('/')
 
-    return redirect('index.html')
-
-# update cart Functionality
-
-def update_item(request, product_id):
-    if request.method == "POST":
-        quantity = int(request.POST.get('quantity', 1))
-        cart = request.session.get('cart', {})
-
-        if str(product_id) in cart:
-            cart[str(product_id)]['quantity'] = quantity
-            request.session['cart'] = cart
-
-        return redirect('index.html')
-    
-# Remove cart item functionality
-
-def remove_item(request, product_id):
-
+# Remove Item from Cart
+def delete_item(request, product_id):
     cart = request.session.get('cart', {})
-
     if str(product_id) in cart:
         del cart[str(product_id)]
+    request.session['cart'] = cart
+    return redirect('/')
+
+# Update Cart Item
+def update_item(request, product_id):
+    if request.method == 'POST':
+        quantity = int(request.POST.get('quantity', 1))
+        cart = request.session.get('cart', {})
+        if str(product_id) in cart:
+            cart[str(product_id)]['quantity'] = quantity
         request.session['cart'] = cart
+    return redirect('/')
 
-    return redirect('index.html')
-
-# Clearing cart
-
+# Clear Cart
 def clear(request):
     request.session['cart'] = {}
-    return redirect('index.html')
+    return redirect('/')
 
-# checkout and email
-
+# Checkout (Send Email & Clear Cart)
 def checkout(request):
-    if request.method == 'POST':
-        customer_email = request.POST.get("email")
-        cart = request.session.get('cart', {})
-
-        if not cart:
-            return redirect('index.html')
-
-        items_list = []
-        total_price = 0
-
-        # Calculate the total price and prepare order details
-        for product_id, item in cart.items():
-            product_obj = product.objects.get(id=product_id)
-            item_total = product_obj.price * item['quantity']
-            total_price += item_total
-            items_list.append(f"{product_obj.name} (x{item['quantity']}) - ${item_total}")
-
-        # Create an order in the database
-        order = Order.objects.create(
-            customer_email=customer_email,
-            items="\n".join(items_list),
-            total_price=total_price,
-        )
-
-        # Send email to the customer
-        customer_subject = "Order Confirmation"
-        customer_message = f"Thank you for your purchase!\n\nOrder Details:\n{order.items}\nTotal: ${order.total_price}"
-        send_mail(customer_subject, customer_message, "your-email@gmail.com", [customer_email])
-
-        # Send email to the store owner
-        owner_subject = f"New Order from {customer_email}"
-        owner_message = f"A new order has been placed.\n\nOrder Details:\n{order.items}\nTotal: ${order.total_price}"
-        send_mail(owner_subject, owner_message, "your-email@gmail.com", ["store-owner-email@gmail.com"])
-
-        # Clear the cart after the purchase
-        request.session['cart'] = {}
-
-        return redirect('order_success')
-
-    return render(request, 'index.html')
-
-
-
-    return render(request,)
+    cart = request.session.get('cart', {})
+    if not cart:
+        return redirect('/')
+    
+    cart_items = []
+    total_price = 0
+    for product_id, item in cart.items():
+        product = get_object_or_404(product, id=product_id)
+        cart_items.append(f"{product.name} x {item['quantity']} - ${product.price * item['quantity']}")
+        total_price += product.price * item['quantity']
+    
+    cart_summary = "\n".join(cart_items)
+    
+    # Send email
+    subject = "Order Confirmation"
+    message = f"Thank you for your order!\n\nYour Items:\n{cart_summary}\n\nTotal: ${total_price}"
+    user_email = request.user.email if request.user.is_authenticated else 'customer@example.com'
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_email, settings.DEFAULT_FROM_EMAIL])
+    
+    request.session['cart'] = {}
+    return redirect('/')
