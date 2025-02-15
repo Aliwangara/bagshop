@@ -53,14 +53,16 @@ INSTALLED_APPS = [
     
 ]
 
-AUTHENTICATION_BACKENDS=(
+AUTHENTICATION_BACKENDS=[
+    'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend'
 
-)
+]
 
 SITE_ID = 1
 LOGIN_REDIRECT_URL = '/'  
 LOGOUT_REDIRECT_URL = '/' 
+ACCOUNT_LOGOUT_ON_GET = True
 
 
 SOCIAL_AUTH_GOOGLE_CLIENT_ID = os.environ.get('SOCIAL_AUTH_GOOGLE_CLIENT_ID ')
@@ -95,6 +97,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'main_app.context_processors.cart_context',
             ],
         },
     },

@@ -33,7 +33,10 @@
                 <h5 class="element-title text-uppercase fs-5 mt-3">
                   <a href="{%url 'product' product.id%}">{{product.name}}</a>
                 </h5>
-                <a href="{%url 'add_to_cart' product.id%}" class="text-decoration-none" data-after="Add to cart">${{product.price}}</a>
+                <a href="" class="text-decoration-none" > <span>${{product.price}}</span> </a>
+                <a href="{%url 'add_to_cart' product.id%}" class="btn-add-to-cart">
+                  Add to cart
+                </a>
               </div>
             </div>
           </div>
