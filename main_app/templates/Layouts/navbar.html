@@ -38,6 +38,9 @@
               <h6 class="my-0">{{item.name}}</h6>
               <small class="text-body-secondary">{{item.quantity}}</small>
               <a href="{% url 'remove_from_cart' item.id %}">Remove</a>
+              <a href="{% url 'update_cart' item.id %}?quantity={{ item.quantity|add:'-1' }}" class="btn btn-sm btn-outline-danger">-</a>
+              <a href="{% url 'update_cart' item.id %}?quantity={{ item.quantity|add:'1' }}" class="btn btn-sm btn-outline-primary">+</a>
+
             </div>
             <span class="text-body-secondary">${{item.total_item_price}}</span>
           </li>

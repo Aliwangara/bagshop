@@ -38,12 +38,19 @@ def delete_item(request, product_id):
 
 # Update Cart Item
 def update_item(request, product_id):
-    if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
+    quantity = request.GET.get('quantity')
+    if quantity is not None:
+        try:
+            quantity = int(quantity)
+            if quantity < 1:
+                quantity = 1
+        except ValueError:
+            return redirect('/')
+
         cart = request.session.get('cart', {})
         if str(product_id) in cart:
             cart[str(product_id)]['quantity'] = quantity
-        request.session['cart'] = cart
+            request.session['cart'] = cart
     return redirect('/')
 
 # Clear Cart
