@@ -1,13 +1,31 @@
 from .models import product, Order
 from django.shortcuts import render, get_object_or_404,redirect
 from django.core.mail import send_mail
+from django.core.mail import EmailMessage
+from .utils import generate_invoice_pdf
+from django.conf import settings
+from django.utils import timezone
+from main_app.models import product,Invoice,InvoiceItem
+from django.contrib import messages
 
 
 # Displaying the cart
 def cart(request):
     cart = request.session.get('cart', {})
-    cart_items =[]
-    total_price =0 
+    cart_items = []
+    total_price = 0
+    
+    for product_id, item in cart.items():
+        Product = get_object_or_404(product, id=product_id)
+        cart_items.append({
+            'id': Product.id,
+            'name': Product.name,
+            'quantity': item['quantity'],
+            'price': Product.price * item['quantity'],
+        })
+        total_price += Product.price * item['quantity']
+    
+    return render(request, 'index.html', {'cart_items': cart_items, 'total_price': total_price})
 
     for product_id, item in cart.items():
         product_obj = get_object_or_404(product, id=product_id)
@@ -65,47 +83,84 @@ def clear(request):
 # checkout and email
 
 def checkout(request):
-    if request.method == 'POST':
-        customer_email = request.POST.get("email")
-        cart = request.session.get('cart', {})
+    cart = request.session.get('cart', {})
+    if not cart:
+        return redirect('/')
+    
 
-        if not cart:
-            return redirect('index.html')
+    
+    cart_items = []
+    total_price = 0
+    for product_id, item in cart.items():
+        Product = get_object_or_404(product, id=product_id)
+        cart_items.append(f"{Product.name} x {item['quantity']} - ${Product.price * item['quantity']}")
+        total_price += Product.price * item['quantity']
 
-        items_list = []
-        total_price = 0
 
-        # Calculate the total price and prepare order details
-        for product_id, item in cart.items():
-            product_obj = product.objects.get(id=product_id)
-            item_total = product_obj.price * item['quantity']
-            total_price += item_total
-            items_list.append(f"{product_obj.name} (x{item['quantity']}) - ${item_total}")
+      # Create Invoice
+    if request.user.is_authenticated:
+        user = request.user
+        user_email = user.email
+    else:
+        user = None
+        user_email = request.session.get('guest_email', 'customer@example.com')
 
-        # Create an order in the database
-        order = Order.objects.create(
-            customer_email=customer_email,
-            items="\n".join(items_list),
-            total_price=total_price,
+    # Create Invoice
+    invoice = Invoice.objects.create(
+        user=user,
+        customer_email=user_email,
+        total_amount=total_price,
+        created_at=timezone.now()
+    )
+
+    for product_id, item in cart.items():
+        Product = get_object_or_404(product, id=product_id)
+        InvoiceItem.objects.create(
+            invoice=invoice,
+            product_name=Product.name,
+            quantity=item['quantity'],
+            price=Product.price
         )
 
-        # Send email to the customer
-        customer_subject = "Order Confirmation"
-        customer_message = f"Thank you for your purchase!\n\nOrder Details:\n{order.items}\nTotal: ${order.total_price}"
-        send_mail(customer_subject, customer_message, "your-email@gmail.com", [customer_email])
+    # Generate PDF Invoice
+    pdf_buffer = generate_invoice_pdf(invoice)
+    pdf_buffer.seek(0)
+    
 
-        # Send email to the store owner
-        owner_subject = f"New Order from {customer_email}"
-        owner_message = f"A new order has been placed.\n\nOrder Details:\n{order.items}\nTotal: ${order.total_price}"
-        send_mail(owner_subject, owner_message, "your-email@gmail.com", ["store-owner-email@gmail.com"])
+    # Email to Customer
+    customer_email = EmailMessage(
+        subject="Your Invoice from Bagshop",
+        body=f"Dear Customer,\n\nThank you for your purchase!\n\nPlease find your invoice attached.\n\nTotal: ${total_price}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user_email],
+    )
+    customer_email.attach(f"Invoice_{invoice.invoice_number}.pdf", pdf_buffer.read(), "application/pdf")
+    customer_email.send()
 
-        # Clear the cart after the purchase
-        request.session['cart'] = {}
+    # Email to Admin
+    admin_email = EmailMessage(
+        subject="New Order Notification",
+        body=f"A new order has been placed.\n\nCustomer Email: {user_email}\nTotal Amount: ${total_price}\n\nInvoice is attached.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[settings.DEFAULT_FROM_EMAIL],
+    )
+    admin_email.attach(f"Invoice_{invoice.invoice_number}.pdf", pdf_buffer.read(), "application/pdf")
+    admin_email.send()
 
-        return redirect('order_success')
+    pdf_buffer.close()
 
-    return render(request, 'index.html')
+    request.session['cart'] = {}  # Clear cart
+    messages.success(request, "Order placed successfully! Check your email for the invoice.")
+    return redirect('/')
 
 
-
-    return render(request,)
+def chekout_template(request):
+    if request.method == 'POST':
+        guest_email = request.POST.get('email')
+        if guest_email:
+            request.session['guest_email'] = guest_email
+            return redirect('checkout')  # Now proceed to checkout
+        else:
+            messages.error(request, "Email is required to continue.")
+            return redirect('chekout_template')
+    return render(request, 'checkout.html')

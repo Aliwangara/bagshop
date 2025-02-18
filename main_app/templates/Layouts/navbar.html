@@ -63,9 +63,21 @@
             <strong>$20</strong>
           </li>
         </ul>
-  {%endfor%}
+  
+        <li class="list-group-item d-flex justify-content-between">
+          <span>Total</span>
+          <strong>{{total_price}}</strong>
+        </li>
+        <a href="{% url 'clear_cart' %}"><button class="w-50 btn btn-danger btn-lg mb-2" type="submit" >clear</button></a>
 
-        <button class="w-100 btn btn-primary btn-lg" type="submit">Continue to Checkout</button>
+        {% if request.user.is_authenticated %}
+          <a href="{% url 'checkout' %}"><button class="w-100 btn btn-primary btn-lg ms-2" type="submit">Checkout</button></a>
+        {% else%}
+          <a href="{%url 'chekout_template'%}" class="w-100 btn btn- btn-lg ms-2">Enter your email</a>
+          </form>
+        {% endif %}
+        
+
       </div>
     </div>
   </div>
@@ -112,6 +124,11 @@
                 <li class="nav-item">
                   <a class="nav-link" href="#">Contact</a>
                 </li>
+                <li class="search-box nav-link" class="mx-2">
+                  <a href="#search" class="search-button">
+                    <p>Categories</p>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -132,23 +149,21 @@
                 </svg>
               </a>
             </li>
-            <li class="d-lg-none">
-              <a href="#" class="mx-2" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart"
-                aria-controls="offcanvasCart">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <use xlink:href="#cart"></use>
-                </svg>
-              </a>
-            </li>
-            <li class="search-box" class="mx-2">
-              <a href="#search" class="search-button">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <use xlink:href="#search"></use>
-                </svg>
-              </a>
-            </li>
+            {% if user.is_authenticated%}
+            <li class="me-3"><a href="{%url 'account_logout'%}" class=" text-bold">Logout</a></li>
+            {% else %}
+
+
+
+              <li class="me-3"><a href="{%url 'account_signup'%}" class=" text-bold">Join Now</a></li>
+              <li class=""><a href="{%url 'account_login'%}" class="text-primary border border-primary rounded-4 py-2 px-3">SignIn</a></li>
+            {%endif%}
+            
           </ul>
+          
         </div>
+
+        
 
       </div>
 

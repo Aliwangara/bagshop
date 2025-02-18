@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # Create your models here.
 
@@ -25,11 +26,22 @@ class product(models.Model):
   return self.name
 
 
-class Order(models.Model):
- customer_email = models.EmailField()
- items = models.JSONField()
- total_price = models.DecimalField(max_digits=10, decimal_places=3)
- created_at = models.DateTimeField(auto_now_add=True)
+class Invoice(models.Model):
+    invoice_number = models.CharField(max_length=20, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    customer_email = models.EmailField()
+    created_at = models.DateTimeField(default=timezone.now)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    is_paid = models.BooleanField(default=False)
 
- def __str__(self):
-  return f"order{self.id} - {self.customer_email} " 
+    def __str__(self):
+        return f"Invoice {self.invoice_number} - {self.customer_email}"
+
+class InvoiceItem(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
+    product_name = models.CharField(max_length=255)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def get_total(self):
+        return self.quantity * self.price
