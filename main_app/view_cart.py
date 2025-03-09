@@ -1,12 +1,14 @@
-from .models import product, Order
+from .models import product, Invoice, InvoiceItem, AbandonedCart
 from django.shortcuts import render, get_object_or_404,redirect
 from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 from .utils import generate_invoice_pdf
 from django.conf import settings
 from django.utils import timezone
-from main_app.models import product,Invoice,InvoiceItem
 from django.contrib import messages
+from django.http import JsonResponse
+from django.utils.timezone import timedelta
+
 
 
 # Displaying the cart
@@ -47,20 +49,26 @@ def add_to_cart(request, product_id):
 
     request.session['cart'] = cart
 
-    return redirect('index.html')
+    return redirect('/')
 
 # update cart Functionality
 
 def update_item(request, product_id):
+    cart = request.session.get('cart', {})
+
     if request.method == "POST":
         quantity = int(request.POST.get('quantity', 1))
-        cart = request.session.get('cart', {})
+    elif request.method == "GET":
+        quantity = int(request.GET.get('quantity', 1))
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=405)
 
-        if str(product_id) in cart:
-            cart[str(product_id)]['quantity'] = quantity
-            request.session['cart'] = cart
+    if str(product_id) in cart:
+        cart[str(product_id)]['quantity'] = max(1, quantity) 
+        request.session['cart'] = cart
+        return redirect('/')  
 
-        return redirect('index.html')
+    return JsonResponse({"error": "Product not in cart"}, status=400)
     
 # Remove cart item functionality
 
@@ -72,13 +80,13 @@ def remove_item(request, product_id):
         del cart[str(product_id)]
         request.session['cart'] = cart
 
-    return redirect('index.html')
+    return redirect('/')
 
 # Clearing cart
 
 def clear(request):
     request.session['cart'] = {}
-    return redirect('index.html')
+    return redirect('/')
 
 # checkout and email
 
@@ -164,3 +172,21 @@ def chekout_template(request):
             messages.error(request, "Email is required to continue.")
             return redirect('chekout_template')
     return render(request, 'checkout.html')
+
+
+
+def send_abandoned_cart_reminder():
+    carts = AbandonedCart.objects.filter(is_recovered=False, last_updated__lt=now() - timedelta(hours=24))
+
+    for cart in carts:
+        if cart.items.exists():  # Only send emails if there are items in the cart
+            item_list = "\n".join([f"{item.product.name} (x{item.quantity})" for item in cart.items.all()])
+            
+            send_mail(
+                subject="You left items in your cart!",
+                message=f"Hi {cart.user.email},\n\nYou left these items in your cart:\n{item_list}\n\nComplete your purchase now!",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[cart.user.email],
+            )
+
+            

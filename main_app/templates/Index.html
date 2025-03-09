@@ -33,7 +33,8 @@
                 <h5 class="element-title text-uppercase fs-5 mt-3">
                   <a href="{%url 'product' product.id%}">{{product.name}}</a>
                 </h5>
-                <a href="{%url 'product' product.id%}" class="text-decoration-none" data-after="Add to cart"><span>${{product.price}}</span></a>
+                <a href="{%url 'product' product.id%}" class="text-decoration-none">${{product.price}}</a>
+                <a href="{%url 'add_to_cart' product.id%}">Add To cart</a>
               </div>
             </div>
           </div>
@@ -69,7 +70,7 @@
             <img src="{%static 'images/Bag.jpg'%}" alt="video" class="video-image img-fluid">
           </div>
           <div class="video-player">
-            <a class="youtube" href="https://www.youtube.com/embed/pjtsGzQjFM4">
+            <a class="youtube" href="https://youtu.be/fTuzv-eHIhk?si=1FEKRaX2GeVoPKA1">
               <svg width="24" height="24" viewBox="0 0 24 24">
                 <use xlink:href="#play"></use>
               </svg>
