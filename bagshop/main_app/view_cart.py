@@ -1,11 +1,10 @@
-from .models import product, Invoice,InvoiceItem
+from .models import product, Invoice,InvoiceItem,AbandonedCart
 from django.shortcuts import render, get_object_or_404,redirect
 from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 from .utils import generate_invoice_pdf
 from django.conf import settings
 from django.utils import timezone
-from main_app.models import product,Invoice,InvoiceItem,AbandonedCart
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.timezone import timedelta
