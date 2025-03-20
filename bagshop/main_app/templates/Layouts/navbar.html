@@ -116,7 +116,7 @@
               </a>
             </li>
             {% if user.is_authenticated%}
-            <li class="me-3"><a href="{%url 'account_signup'%}" class=" text-bold">Logout</a></li>
+            <li class="me-3"><a href="{%url 'account_logout'%}" class=" text-bold">Logout</a></li>
             {% else %}
               <li class="me-3"><a href="{%url 'account_signup'%}" class=" text-bold">Join Now</a></li>
               <li class=""><a href="{%url 'account_login'%}" class="text-primary border border-primary rounded-4 py-2 px-3">SignIn</a></li>
